@@ -1,53 +1,59 @@
-import { Request, Response } from 'express';
+import { Request, Response } from "express";
 
-class BaseController {
-    async create(req: Request, res: Response) {
-        try {
-            // Implement create logic here
-            res.status(201).json({ message: 'Resource created successfully' });
-        } catch (error) {
-            res.status(500).json({ error: 'Internal Server Error' });
-        }
-    }
+export abstract class BaseController<T> {
+  protected abstract service: any;
 
-    async readAll(req: Request, res: Response) {
-        try {
-            // Implement read all logic here
-            res.status(200).json({ message: 'Fetched all resources' });
-        } catch (error) {
-            res.status(500).json({ error: 'Internal Server Error' });
-        }
+  async getAll(req: Request, res: Response): Promise<Response> {
+    try {
+      const items = await this.service.getAll();
+      return res.status(200).json(items);
+    } catch (error) {
+      return res.status(500).json({ message: "Error retrieving data", error });
     }
+  }
 
-    async readById(req: Request, res: Response) {
-        try {
-            const { id } = req.params;
-            // Implement read by ID logic here
-            res.status(200).json({ message: `Fetched resource with ID ${id}` });
-        } catch (error) {
-            res.status(500).json({ error: 'Internal Server Error' });
-        }
+  async getOne(req: Request, res: Response): Promise<Response> {
+    try {
+      const item = await this.service.getOne(req.params.id);
+      if (!item) {
+        return res.status(404).json({ message: "Item not found" });
+      }
+      return res.status(200).json(item);
+    } catch (error) {
+      return res.status(500).json({ message: "Error retrieving item", error });
     }
+  }
 
-    async update(req: Request, res: Response) {
-        try {
-            const { id } = req.params;
-            // Implement update logic here
-            res.status(200).json({ message: `Updated resource with ID ${id}` });
-        } catch (error) {
-            res.status(500).json({ error: 'Internal Server Error' });
-        }
+  async create(req: Request, res: Response): Promise<Response> {
+    try {
+      const newItem = await this.service.create(req.body);
+      return res.status(201).json(newItem);
+    } catch (error) {
+      return res.status(500).json({ message: "Error creating item", error });
     }
+  }
 
-    async delete(req: Request, res: Response) {
-        try {
-            const { id } = req.params;
-            // Implement delete logic here
-            res.status(200).json({ message: `Deleted resource with ID ${id}` });
-        } catch (error) {
-            res.status(500).json({ error: 'Internal Server Error' });
-        }
+  async update(req: Request, res: Response): Promise<Response> {
+    try {
+      const updatedItem = await this.service.update(req.params.id, req.body);
+      if (!updatedItem) {
+        return res.status(404).json({ message: "Item not found" });
+      }
+      return res.status(200).json(updatedItem);
+    } catch (error) {
+      return res.status(500).json({ message: "Error updating item", error });
     }
+  }
+
+  async delete(req: Request, res: Response): Promise<Response> {
+    try {
+      const deletedItem = await this.service.delete(req.params.id);
+      if (!deletedItem) {
+        return res.status(404).json({ message: "Item not found" });
+      }
+      return res.status(200).json({ message: "Item deleted successfully" });
+    } catch (error) {
+      return res.status(500).json({ message: "Error deleting item", error });
+    }
+  }
 }
-
-export default BaseController;
